@@ -4,13 +4,16 @@
 echo "*** Forcing react-native version to 0.59.8 instead of $REACT_NATIVE_VERSION ***"
 export REACT_NATIVE_VERSION="0.59.8"
 
-# Approve unapproved SDK licenses
-yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+
+if [[ "$TRAVIS" != "true" ]]; then
+    # Approve unapproved SDK licenses
+    yes | $ANDROID_HOME/tools/bin/sdkmanager --licenses
+fi
 
 source $(dirname "$0")/ci.sh
 
 pushd detox/android
-run_f "./gradlew test"
+#TEMP#run_f "./gradlew test"
 popd
 
 pushd detox/test
@@ -18,7 +21,16 @@ pushd detox/test
 mv node_modules/react-native/ReactAndroid/release.gradle node_modules/react-native/ReactAndroid/release.gradle.bak
 cp extras/release.gradle node_modules/react-native/ReactAndroid/
 
-run_f "npm run build:android"
+#TEMP#run_f "npm run build:android"
+popd
+
+if [[ "$TRAVIS" == "true" ]]; then
+    run_f "$(dirname "$0")/ci.android.waitforemulator.sh"
+fi
+
+pushd detox/test
+#TEMP#
+      run_f "npm run build:android"
 run_f "npm run e2e:android-ci"
 cp coverage/lcov.info coverage/e2e.lcov
 # run_f "npm run verify-artifacts:android"
